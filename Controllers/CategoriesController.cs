@@ -16,18 +16,41 @@ namespace E_Commerce.Controllers
         {
             this.categoryRespository = categoryRespository;
         }
+        /*  [HttpPost]
+          public async Task<IActionResult> CreateCategory(Category category)
+          {
+              if (ModelState.IsValid)
+              {
+                  await categoryRespository.CreateAsync(category);
+
+                  return Ok();
+              }
+
+              return BadRequest(ModelState);
+          }*/
         [HttpPost]
-        public async Task<IActionResult> CreateCategory(Category category)
+        public async Task<IActionResult> CreateCategory([FromForm] Category category, IFormFile image)
         {
-            if (ModelState.IsValid)
+            try
             {
-                await categoryRespository.CreateAsync(category);
+                if (ModelState.IsValid)
+                {
+                    // Call the repository's CreateAsync method with the image file
+                    await categoryRespository.CreateAsync(category, image);
 
-                return Ok();
+                    return Ok();
+                }
+
+                return BadRequest(ModelState);
             }
-
-            return BadRequest(ModelState);
+            catch (Exception ex)
+            {
+                // Log the exception for debugging
+                Console.Error.WriteLine(ex);
+                return StatusCode(500, "An error occurred during category creation.");
+            }
         }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Category>>> GetAllCategories()
         {
@@ -46,7 +69,7 @@ namespace E_Commerce.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(int id, Category category)
+        public async Task<IActionResult> UpdateCategory(int id, [FromForm] Category category, IFormFile image)
         {
             try
             {
@@ -55,7 +78,7 @@ namespace E_Commerce.Controllers
                     return BadRequest("Mismatched IDs in the request.");
                 }
 
-                var updatedCategory = await categoryRespository.UpdateAsync(category);
+                var updatedCategory = await categoryRespository.UpdateAsync(category,image);
 
                 if (updatedCategory == null)
                 {
