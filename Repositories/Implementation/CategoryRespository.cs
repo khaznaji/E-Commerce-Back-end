@@ -3,6 +3,7 @@ using E_Commerce.Models.Domain;
 using E_Commerce.Repositories.Interface;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace E_Commerce.Repositories.Implementation
 {
@@ -22,6 +23,14 @@ namespace E_Commerce.Repositories.Implementation
          }*/
         public async Task<Category> CreateAsync(Category category, IFormFile image)
         {
+            var existingCategory = await _context.Categories.FirstOrDefaultAsync(c => c.Name == category.Name);
+
+            if (existingCategory != null)
+            {
+                // Category with the same name already exists, return a conflict response
+                // You can customize the response based on your application's requirements
+                return null;
+            }
             // Ensure the image is provided
             if (image != null && image.Length > 0)
             {
@@ -46,7 +55,7 @@ namespace E_Commerce.Repositories.Implementation
                 // Set the ImageUrl property of the category to the saved file path
                 category.ImageUrl = $"\\Categories\\{fileName}";
             }
-
+            category.Archive = false;
             // Save the category to the database
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
@@ -165,6 +174,23 @@ namespace E_Commerce.Repositories.Implementation
             }
         }
 
+
+        public async Task<bool> ToggleArchivedAsync(int categoryId)
+        {
+            var category = await _context.Categories.FindAsync(categoryId);
+
+            if (category == null)
+            {
+                return false; // Catégorie non trouvée
+            }
+
+            // Inverser l'état d'archivage
+            category.Archive = !category.Archive;
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
     }
 }
 

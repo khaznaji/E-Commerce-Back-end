@@ -8,6 +8,7 @@ namespace E_Commerce.Repositories.Interface
         Task<IEnumerable<Category>> GetAllAsync();
         Task<bool> DeleteAsync(int categoryId);
         Task<Category> UpdateAsync(Category category, IFormFile image);
+         Task<bool> ToggleArchivedAsync(int categoryId);
 
 
     }

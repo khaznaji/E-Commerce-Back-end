@@ -4,6 +4,7 @@ using E_Commerce.Repositories.Implementation;
 using E_Commerce.Repositories.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace E_Commerce.Controllers
 {
@@ -31,6 +32,7 @@ namespace E_Commerce.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateCategory([FromForm] Category category, IFormFile image)
         {
+           
             try
             {
                 if (ModelState.IsValid)
@@ -92,6 +94,29 @@ namespace E_Commerce.Controllers
                 // Log the exception for debugging
                 Console.Error.WriteLine(ex);
                 return StatusCode(500, "An error occurred during the update.");
+            }
+        }
+
+        [HttpPut("toggle-archive/{categoryId}")]
+        public async Task<IActionResult> ToggleArchive(int categoryId)
+        {
+            try
+            {
+                var success = await categoryRespository.ToggleArchivedAsync(categoryId);
+
+                if (success)
+                {
+                    return Ok($"L'archivage de la catégorie avec l'ID {categoryId} a été modifié avec succès.");
+                }
+                else
+                {
+                    return NotFound($"Catégorie avec l'ID {categoryId} non trouvée.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception according to your needs
+                return StatusCode(500, $"Erreur lors de la modification de l'archivage de la catégorie. Détails : {ex.Message}");
             }
         }
     }
