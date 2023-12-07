@@ -20,6 +20,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 builder.Services.AddScoped<ICategoryRespository, CategoryRespository>();
+builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
 
 var app = builder.Build();
 

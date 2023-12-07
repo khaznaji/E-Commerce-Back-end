@@ -1,108 +1,111 @@
-﻿using E_Commerce.Data;
-using E_Commerce.Models.Domain;
+﻿using E_Commerce.Models.Domain;
 using E_Commerce.Repositories.Implementation;
 using E_Commerce.Repositories.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace E_Commerce.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CategoriesController : ControllerBase
+    public class SubCategoryController : ControllerBase
     {
-        private readonly ICategoryRespository categoryRespository;
-        public CategoriesController(ICategoryRespository categoryRespository)
+        private readonly ISubCategoryRepository subcategoryRepository;
+
+        public SubCategoryController(ISubCategoryRepository subcategoryRepository)
         {
-            this.categoryRespository = categoryRespository;
+           this.subcategoryRepository = subcategoryRepository;
         }
-        /*  [HttpPost]
-          public async Task<IActionResult> CreateCategory(Category category)
-          {
-              if (ModelState.IsValid)
-              {
-                  await categoryRespository.CreateAsync(category);
 
-                  return Ok();
-              }
-
-              return BadRequest(ModelState);
-          }*/
         [HttpPost]
-        public async Task<IActionResult> CreateCategory([FromForm] Category category, IFormFile image)
+        public async Task<IActionResult> CreateSubcategory([FromForm] SubCategory subcategory)
         {
-
             try
             {
                 if (ModelState.IsValid)
                 {
-                    // Call the repository's CreateAsync method with the image file
-                    await categoryRespository.CreateAsync(category, image);
+                    var options = new JsonSerializerOptions
+                    {
+                        ReferenceHandler = ReferenceHandler.Preserve,
+                        // Ajoutez d'autres options si nécessaire
+                    };
 
-                    return Ok();
+                    var createdSubcategory = await subcategoryRepository.CreateAsync(subcategory);
+
+                    // Sérialiser l'objet créé en JSON en utilisant les options
+                    var jsonResult = JsonSerializer.Serialize(createdSubcategory, options);
+
+                    return Ok(jsonResult);
                 }
 
                 return BadRequest(ModelState);
             }
             catch (Exception ex)
             {
-                // Log the exception for debugging
                 Console.Error.WriteLine(ex);
-                return StatusCode(500, "An error occurred during category creation.");
+
+                // Vous pouvez également renvoyer une réponse HTTP 500 avec des détails sur l'erreur
+                return StatusCode(500, $"An error occurred during subcategory creation. Details: {ex.Message}");
             }
         }
-
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetAllCategories()
+        public async Task<IActionResult> GetAllSubcategories()
         {
-            var categories = await categoryRespository.GetAllAsync();
-            return Ok(categories);
+            var subcategories = await subcategoryRepository.GetAllAsync();
+            return Ok(subcategories);
         }
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCategory(int id)
+
+        [HttpGet("{subcategoryId}")]
+        public async Task<IActionResult> GetSubcategoryById(int subcategoryId)
         {
-            var isDeleted = await categoryRespository.DeleteAsync(id);
+            var subcategory = await subcategoryRepository.GetByIdAsync(subcategoryId);
 
-            if (isDeleted)
-                return Ok();
-
-            return NotFound();
+            if (subcategory == null)
+                return NotFound($"Subcategory with ID {subcategoryId} not found.");
+            return Ok(subcategory);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(int id, [FromForm] Category category, IFormFile image)
+        public async Task<IActionResult> UpdateSubcategory(int id, [FromForm] SubCategory subcategory)
         {
+            if (id != subcategory.Id)
+            {
+                return BadRequest("Mismatched IDs in the request.");
+            }
             try
             {
-                if (id != category.Id)
-                {
-                    return BadRequest("Mismatched IDs in the request.");
-                }
+                var updatedSubcategory = await subcategoryRepository.UpdateAsync(subcategory);
 
-                var updatedCategory = await categoryRespository.UpdateAsync(category, image);
+                if (updatedSubcategory == null)
+                    return NotFound($"Subcategory with ID {subcategory.Id} not found.");
 
-                if (updatedCategory == null)
-                {
-                    return NotFound("Category not found.");
-                }
-
-                return Ok(updatedCategory);
+                return Ok(updatedSubcategory);
             }
             catch (Exception ex)
             {
-                // Log the exception for debugging
                 Console.Error.WriteLine(ex);
-                return StatusCode(500, "An error occurred during the update.");
+                return StatusCode(500, $"An error occurred during subcategory update. Details: {ex.Message}");
             }
         }
 
+        [HttpDelete("{subcategoryId}")]
+        public async Task<IActionResult> DeleteSubcategory(int subcategoryId)
+        {
+            var success = await subcategoryRepository   .DeleteAsync(subcategoryId);
+
+            if (success)
+                return Ok($"Subcategory with ID {subcategoryId} deleted successfully.");
+            else
+                return NotFound($"Subcategory with ID {subcategoryId} not found.");
+        }
         [HttpPut("toggle-archive/{categoryId}")]
         public async Task<IActionResult> ToggleArchive(int categoryId)
         {
             try
             {
-                var success = await categoryRespository.ToggleArchivedAsync(categoryId);
+                var success = await subcategoryRepository.ToggleArchivedAsync(categoryId);
 
                 if (success)
                 {
@@ -119,7 +122,6 @@ namespace E_Commerce.Controllers
                 return StatusCode(500, $"Erreur lors de la modification de l'archivage de la catégorie. Détails : {ex.Message}");
             }
         }
-
         [HttpDelete("delete-multiple")]
         public async Task<IActionResult> DeleteMultiple([FromBody] List<int> subcategoryIds)
         {
@@ -130,7 +132,7 @@ namespace E_Commerce.Controllers
 
             try
             {
-                var result = await categoryRespository.DeleteMultipleAsync(subcategoryIds);
+                var result = await subcategoryRepository.DeleteMultipleAsync(subcategoryIds);
 
                 if (result)
                 {
@@ -152,7 +154,7 @@ namespace E_Commerce.Controllers
         {
             try
             {
-                var result = await categoryRespository.DeleteAllAsync();
+                var result = await subcategoryRepository.DeleteAllAsync();
 
                 if (result)
                 {
@@ -169,5 +171,5 @@ namespace E_Commerce.Controllers
                 return StatusCode(500, "An error occurred while processing the request.");
             }
         }
-    } 
+    }
 }

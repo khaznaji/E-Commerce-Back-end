@@ -175,22 +175,77 @@ namespace E_Commerce.Repositories.Implementation
         }
 
 
+
         public async Task<bool> ToggleArchivedAsync(int categoryId)
         {
-            var category = await _context.Categories.FindAsync(categoryId);
-
-            if (category == null)
+            try
             {
-                return false; // Catégorie non trouvée
+                // Retrieve the category
+                var category = await _context.Categories.FindAsync(categoryId);
+
+                // Check if the category exists
+                if (category == null)
+                {
+                    return false; // Or throw an exception, depending on your requirements
+                }
+
+                // Toggle the archived status of the category
+                category.Archive = !category.Archive;
+
+                // Retrieve subcategories associated with the category
+                var subcategories = _context.SubCategory.Where(s => s.CategoryId == categoryId);
+
+                // Toggle the archived status of subcategories
+                foreach (var subcategory in subcategories)
+                {
+                    subcategory.Archive = category.Archive;
+                }
+
+                // Save changes to the database
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception according to your needs
+                throw new Exception($"Error toggling archived status. Details: {ex.Message}", ex);
+            }
+        }
+        public async Task<Category> GetByNameAsync(string name)
+        {
+            return await _context.Categories.FirstOrDefaultAsync(c => c.Name == name);
+        }
+
+        public async Task<bool> DeleteMultipleAsync(List<int> subcategoryIds)
+        {
+            foreach (var subcategoryId in subcategoryIds)
+            {
+                var subcategoryToDelete = await _context.Categories.FindAsync(subcategoryId);
+
+                if (subcategoryToDelete != null)
+                {
+                    _context.Categories.Remove(subcategoryToDelete);
+                }
             }
 
-            // Inverser l'état d'archivage
-            category.Archive = !category.Archive;
+            await _context.SaveChangesAsync();
 
+            return true;
+        }
+        public async Task<bool> DeleteAllAsync()
+        {
+            var subcategoriesToDelete = await _context.Categories.ToListAsync();
+
+            if (subcategoriesToDelete == null || !subcategoriesToDelete.Any())
+            {
+                return false;
+            }
+
+            _context.Categories.RemoveRange(subcategoriesToDelete);
             await _context.SaveChangesAsync();
 
             return true;
         }
     }
 }
-
