@@ -1,4 +1,5 @@
 using E_Commerce.Data;
+using E_Commerce.Models.Repositories;
 using E_Commerce.Repositories.Implementation;
 using E_Commerce.Repositories.Interface;
 using Microsoft.AspNetCore.Localization;
@@ -21,6 +22,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<ICategoryRespository, CategoryRespository>();
 builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 var app = builder.Build();
 

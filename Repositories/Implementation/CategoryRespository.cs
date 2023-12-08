@@ -225,6 +225,30 @@ namespace E_Commerce.Repositories.Implementation
 
                 if (subcategoryToDelete != null)
                 {
+                    // Récupérer le chemin du fichier à partir de la propriété ImageUrl
+                    var filePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image", subcategoryToDelete.ImageUrl.TrimStart('\\'));
+
+                    // Log des informations pour le débogage
+                    Console.WriteLine($"Trying to delete file: {filePath}");
+
+                    // Supprimer le fichier du disque
+                    try
+                    {
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                            Console.WriteLine($"File deleted successfully: {filePath}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("File does not exist.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error deleting file: {ex.Message}");
+                    }
+
                     _context.Categories.Remove(subcategoryToDelete);
                 }
             }
@@ -235,14 +259,41 @@ namespace E_Commerce.Repositories.Implementation
         }
         public async Task<bool> DeleteAllAsync()
         {
-            var subcategoriesToDelete = await _context.Categories.ToListAsync();
+            var categoriesToDelete = await _context.Categories.ToListAsync();
 
-            if (subcategoriesToDelete == null || !subcategoriesToDelete.Any())
+            if (categoriesToDelete == null || !categoriesToDelete.Any())
             {
                 return false;
             }
 
-            _context.Categories.RemoveRange(subcategoriesToDelete);
+            foreach (var categoryToDelete in categoriesToDelete)
+            {
+                // Récupérer le chemin du fichier à partir de la propriété ImageUrl
+                var filePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image", categoryToDelete.ImageUrl.TrimStart('\\'));
+
+                // Log des informations pour le débogage
+                Console.WriteLine($"Trying to delete file: {filePath}");
+
+                // Supprimer le fichier du disque
+                try
+                {
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                        Console.WriteLine($"File deleted successfully: {filePath}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("File does not exist.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deleting file: {ex.Message}");
+                }
+            }
+
+            _context.Categories.RemoveRange(categoriesToDelete);
             await _context.SaveChangesAsync();
 
             return true;

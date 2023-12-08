@@ -13,6 +13,12 @@ namespace E_Commerce.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<SubCategory> SubCategory { get; set; }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<SubCategory>()
+                .Property(s => s.Id)
+                .ValueGeneratedOnAdd();
+        }
 
     }
 }
