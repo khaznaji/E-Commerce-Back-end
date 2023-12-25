@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using E_Commerce.Data;
 using System.IO;
 using System;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
 namespace E_Commerce.Models.Repositories
 {
@@ -19,68 +21,138 @@ namespace E_Commerce.Models.Repositories
         {
             _dbContext = dbContext;
         }
-        public async Task AddProductAsync(Product product)
+        /* public async Task AddProductAsync(Product product)                      
+         {
+             // Ajouter des validations supplémentaires si nécessaire
+
+             // Vérifier si la SubCategory associée au produit existe
+             var existingSubCategory = await _dbContext.SubCategory
+                 .FirstOrDefaultAsync(sc => sc.Id == product.SubCategoryId);
+
+             if (existingSubCategory == null)
+             {
+                 // La SubCategory n'existe pas, vous pouvez gérer cela en fonction de vos besoins
+                 // Vous pourriez lever une exception, créer la SubCategory, etc.
+                 throw new InvalidOperationException("SubCategory not found");
+             }
+
+             // Associer la SubCategory au produit
+             product.SubCategory = existingSubCategory;
+
+             // Ajouter le produit à la base de données de manière asynchrone
+             await _dbContext.Products.AddAsync(product);
+
+             // Enregistrer les modifications dans la base de données
+             await _dbContext.SaveChangesAsync();
+
+             // Créer le dossier pour stocker les images du produit
+             var productFolder = $"{product.Id}_{product.Name}";
+             var path = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Products", productFolder);
+
+             // Vérifier si le dossier existe, sinon le créer
+             if (!Directory.Exists(path))
+             {
+                 Directory.CreateDirectory(path);
+             }
+
+             // Créer une nouvelle liste pour stocker les URLs des images mises à jour
+             var updatedImageUrls = new List<string>();
+
+             // Ajouter les URLs des images associées au produit
+             if (product.ImageUrls != null && product.ImageUrls.Any())
+             {
+                 foreach (var imageUrl in product.ImageUrls)
+                 {
+                     // Créer un nom de fichier unique en ajoutant un timestamp
+                     var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+                     var fileName = $"{timestamp}_{Path.GetFileName(imageUrl)}";
+
+                     // Copier l'image vers le dossier du produit
+                     var destinationPath = Path.Combine(path, fileName);
+                     File.Copy(imageUrl, destinationPath, true);
+
+                     // Stocker le chemin relatif de l'image dans la liste mise à jour
+                     updatedImageUrls.Add(Path.Combine(productFolder, fileName));
+                 }
+
+                 // Assigner la liste mise à jour à product.ImageUrls
+                 product.ImageUrls = updatedImageUrls;
+                 await _dbContext.Products.AddAsync(product);
+
+                 // Enregistrer les modifications dans la base de données
+                 await _dbContext.SaveChangesAsync();
+
+             }
+         }*/
+
+public async Task<IActionResult> AddProductAsync([FromForm] Product product, [FromForm] List<IFormFile> images)
+    {
+        // Vérifier si la SubCategory associée au produit existe
+        var existingSubCategory = await _dbContext.SubCategory
+            .FirstOrDefaultAsync(sc => sc.Id == product.SubCategoryId);
+
+        if (existingSubCategory == null)
         {
-            // Ajouter des validations supplémentaires si nécessaire
+            // La SubCategory n'existe pas, vous pouvez gérer cela en fonction de vos besoins
+            // Vous pourriez lever une exception, créer la SubCategory, etc.
+            throw new InvalidOperationException("SubCategory not found");
+        }
 
-            // Vérifier si la SubCategory associée au produit existe
-            var existingSubCategory = await _dbContext.SubCategory
-                .FirstOrDefaultAsync(sc => sc.Id == product.SubCategoryId);
+        // Associer la SubCategory au produit
+        product.SubCategory = existingSubCategory;
 
-            if (existingSubCategory == null)
+        // Ajouter le produit à la base de données de manière asynchrone
+        await _dbContext.Products.AddAsync(product);
+
+        // Enregistrer les modifications dans la base de données
+        await _dbContext.SaveChangesAsync();
+
+        // Créer le dossier pour stocker les images du produit
+        var productFolder = $"{product.Id}_{product.Name}";
+        var path = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Products", productFolder);
+
+        // Vérifier si le dossier existe, sinon le créer
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
+
+        var updatedImageUrls = new List<string>();
+
+        // Sauvegarder chaque image téléchargée
+        foreach (var formFile in images)
+        {
+            if (formFile.Length > 0)
             {
-                // La SubCategory n'existe pas, vous pouvez gérer cela en fonction de vos besoins
-                // Vous pourriez lever une exception, créer la SubCategory, etc.
-                throw new InvalidOperationException("SubCategory not found");
-            }
+                // Créer un nom de fichier unique avec un timestamp
+                var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+                var fileName = $"{timestamp}_{formFile.FileName}";
 
-            // Associer la SubCategory au produit
-            product.SubCategory = existingSubCategory;
+                var filePath = Path.Combine(path, fileName);
 
-            // Ajouter le produit à la base de données de manière asynchrone
-            await _dbContext.Products.AddAsync(product);
-
-            // Enregistrer les modifications dans la base de données
-            await _dbContext.SaveChangesAsync();
-
-            // Créer le dossier pour stocker les images du produit
-            var productFolder = $"{product.Id}_{product.Name}";
-            var path = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Products", productFolder);
-
-            // Vérifier si le dossier existe, sinon le créer
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-
-            // Créer une nouvelle liste pour stocker les URLs des images mises à jour
-            var updatedImageUrls = new List<string>();
-
-            // Ajouter les URLs des images associées au produit
-            if (product.ImageUrls != null && product.ImageUrls.Any())
-            {
-                foreach (var imageUrl in product.ImageUrls)
+                using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    // Créer un nom de fichier unique en ajoutant un timestamp
-                    var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-                    var fileName = $"{timestamp}_{Path.GetFileName(imageUrl)}";
-
-                    // Copier l'image vers le dossier du produit
-                    var destinationPath = Path.Combine(path, fileName);
-                    File.Copy(imageUrl, destinationPath, true);
-
-                    // Stocker le chemin relatif de l'image dans la liste mise à jour
-                    updatedImageUrls.Add(Path.Combine(productFolder, fileName));
+                    await formFile.CopyToAsync(stream);
                 }
 
-                // Assigner la liste mise à jour à product.ImageUrls
-                product.ImageUrls = updatedImageUrls;
-
-                // Enregistrer les modifications dans la base de données
-                await _dbContext.SaveChangesAsync();
+                updatedImageUrls.Add(Path.Combine(productFolder, fileName));
             }
         }
-        private async Task RenameProductFolder(Product existingProduct, string newProductName)
+
+        // Mettre à jour les URL des images dans le produit
+        product.ImageUrls = updatedImageUrls;
+
+        // Ajouter le produit à la base de données avec les images mises à jour
+        await _dbContext.Products.AddAsync(product);
+
+        // Enregistrer les modifications dans la base de données
+        await _dbContext.SaveChangesAsync();
+
+            // Retourner une réponse de succès
+            return null; 
+    }
+
+    private async Task RenameProductFolder(Product existingProduct, string newProductName)
         {
             var oldProductFolder = $"{existingProduct.Id}_{existingProduct.Name}";
             var newProductFolder = $"{existingProduct.Id}_{newProductName}";
