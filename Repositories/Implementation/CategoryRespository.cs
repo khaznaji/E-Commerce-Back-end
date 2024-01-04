@@ -44,7 +44,7 @@ namespace E_Commerce.Repositories.Implementation
                 var fileName = $"{timestamp}{fileExtension}";
 
                 // Combine the file path with the category image directory
-                var filePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Categories", fileName);
+                var filePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Categories", fileName);
 
                 // Save the image to the specified pat  h
                 using (var stream = new FileStream(filePath, FileMode.Create))
@@ -76,7 +76,7 @@ namespace E_Commerce.Repositories.Implementation
                 return false;
 
             // Récupérer le chemin du fichier à partir de la propriété ImageUrl
-            var filePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image", categoryToDelete.ImageUrl.TrimStart('\\'));
+            var filePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image", categoryToDelete.ImageUrl.TrimStart('\\'));
 
             // Log des informations pour le débogage
             Console.WriteLine($"Trying to delete file: {filePath}");
@@ -131,7 +131,7 @@ namespace E_Commerce.Repositories.Implementation
                     var fileName = $"{timestamp}{fileExtension}";
 
                     // Combine the file path with the category image directory
-                    var newFilePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Categories", fileName);
+                    var newFilePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Categories", fileName);
 
                     // Save the new image to the specified path
                     using (var stream = new FileStream(newFilePath, FileMode.Create))
@@ -142,7 +142,7 @@ namespace E_Commerce.Repositories.Implementation
                     // Delete the old image
                     if (!string.IsNullOrEmpty(existingCategory.ImageUrl))
                     {
-                        var oldFilePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image", existingCategory.ImageUrl.TrimStart('\\'));
+                        var oldFilePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image", existingCategory.ImageUrl.TrimStart('\\'));
 
                         // Check if the old image file exists before attempting to delete
                         if (File.Exists(oldFilePath))
@@ -226,7 +226,7 @@ namespace E_Commerce.Repositories.Implementation
                 if (subcategoryToDelete != null)
                 {
                     // Récupérer le chemin du fichier à partir de la propriété ImageUrl
-                    var filePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image", subcategoryToDelete.ImageUrl.TrimStart('\\'));
+                    var filePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image", subcategoryToDelete.ImageUrl.TrimStart('\\'));
 
                     // Log des informations pour le débogage
                     Console.WriteLine($"Trying to delete file: {filePath}");
@@ -269,7 +269,7 @@ namespace E_Commerce.Repositories.Implementation
             foreach (var categoryToDelete in categoriesToDelete)
             {
                 // Récupérer le chemin du fichier à partir de la propriété ImageUrl
-                var filePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image", categoryToDelete.ImageUrl.TrimStart('\\'));
+                var filePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image", categoryToDelete.ImageUrl.TrimStart('\\'));
 
                 // Log des informations pour le débogage
                 Console.WriteLine($"Trying to delete file: {filePath}");

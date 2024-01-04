@@ -12,5 +12,8 @@ namespace E_Commerce.Repositories.Interface
         Task<IEnumerable<Product>> GetAllAsync();
         Task<bool> DeleteMultipleAsync(List<int> productIds);
         Task<bool> DeleteAllAsync();
+        Task<Product> GetByIdAsync(int productId);
+        Task UpdateProductNewAsync(int productId, [FromForm] Product product, [FromForm] List<IFormFile> images);
+
     }
 }

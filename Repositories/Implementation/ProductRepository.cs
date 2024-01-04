@@ -21,6 +21,11 @@ namespace E_Commerce.Models.Repositories
         {
             _dbContext = dbContext;
         }
+        public async Task<Product> GetByIdAsync(int productId)
+        {
+            return await _dbContext.Products
+                .FirstOrDefaultAsync(p => p.Id == productId);
+        }
         /* public async Task AddProductAsync(Product product)                      
          {
              // Ajouter des validations supplémentaires si nécessaire
@@ -84,8 +89,172 @@ namespace E_Commerce.Models.Repositories
 
              }
          }*/
+        public async Task UpdateProductNewAsync(int productId, [FromForm] Product product, [FromForm] List<IFormFile> images)
+        {
+            // Ajouter des validations supplémentaires si nécessaire
 
-public async Task<IActionResult> AddProductAsync([FromForm] Product product, [FromForm] List<IFormFile> images)
+            // Vérifier si la SubCategory associée au produit existe
+            var existingSubCategory = await _dbContext.SubCategory
+                .FirstOrDefaultAsync(sc => sc.Id == product.SubCategoryId);
+
+            if (existingSubCategory == null)
+            {
+                // La SubCategory n'existe pas, vous pouvez gérer cela en fonction de vos besoins
+                // Vous pourriez lever une exception, créer la SubCategory, etc.
+                throw new InvalidOperationException("SubCategory not found");
+            }
+
+            // Vérifier si le produit existe déjà dans la base de données
+            var existingProduct = await _dbContext.Products
+                .FirstOrDefaultAsync(p => p.Id == product.Id);
+            if (!string.Equals(existingProduct.Name, product.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                // Renommer le dossier du produit avec le nouveau nom
+                await RenameProductFolder(existingProduct, product.Name);
+            }
+            if (existingProduct == null)
+            {
+                // Le produit n'existe pas, lever une exception
+                throw new InvalidOperationException("Product not found for update");
+            }
+
+            var oldProductFolder = $"{existingProduct.Id}_{existingProduct.Name}";
+            var oldProductName = existingProduct.Name; // Extraire l'ancien nom du produit
+            var oldPath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Products");
+
+            // Comparer et mettre à jour les propriétés du produit
+            existingProduct.Name = product.Name;
+            existingProduct.OriginalPrice = product.OriginalPrice;
+            existingProduct.DiscountedPrice = product.DiscountedPrice;
+            existingProduct.Description = product.Description;
+            existingProduct.Stock = product.Stock;
+            existingProduct.Color = product.Color;
+            existingProduct.Size = product.Size;
+            existingProduct.Material = product.Material;
+            existingProduct.Composition = product.Composition;
+            existingProduct.Col = product.Col;
+            existingProduct.Promo = product.Promo;
+            existingProduct.Onsale = product.Onsale;
+            existingProduct.Date = product.Date;
+
+            // Vérifier si le nom du produit a changé
+            if (existingProduct.Name != product.Name)
+            {
+                // Renommer le dossier du produit avec le nouveau nom
+                var newProductFolder = $"{existingProduct.Id}_{product.Name}";
+                var newPath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Products", newProductFolder);
+
+                try
+                {
+                    // Supprimer le dossier existant s'il existe
+                    if (Directory.Exists(oldPath))
+                    {
+                        Directory.Move(oldPath, newPath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Ajoutez une gestion d'erreur appropriée ici
+                    Console.WriteLine($"Erreur lors du déplacement du dossier : {ex.Message}");
+                    throw;
+                }
+
+                // Mettre à jour le chemin avec le nouveau chemin
+                oldPath = newPath;
+            }
+            var updatedImageUrls = new List<string>();
+
+            if (images != null && images.Any())
+            {
+                var destinationFolder = Path.Combine(oldPath, $"{existingProduct.Id}_{existingProduct.Name}");
+
+                // Récupérer la liste des anciennes images associées au produit
+                var oldImageUrls = existingProduct.ImageUrls.ToList();
+
+                // Supprimer les images qui ne sont plus associées au produit
+                foreach (var oldImageUrl in oldImageUrls)
+                {
+                    if (!images.Any(newImage => IsSameImage(oldImageUrl, newImage)))
+                    {
+                        var oldImagePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Products", oldImageUrl);
+
+                        try
+                        {
+                            File.Delete(oldImagePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Ajoutez une gestion d'erreur appropriée ici
+                            Console.WriteLine($"Erreur lors de la suppression de l'image existante : {ex.Message}");
+                            throw;
+                        }
+
+                        // Retirer l'ancienne image de la liste
+                        existingProduct.ImageUrls.Remove(oldImageUrl);
+                    }
+                }
+
+                // Copier les nouvelles images
+                foreach (var image in images)
+                {
+                    var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+                    var fileName = $"{timestamp}_{Path.GetFileName(image.FileName)}";
+
+                    // Mettre à jour le chemin avec le nouveau chemin (ajout du sous-dossier)
+                    var destinationPath = Path.Combine(destinationFolder, fileName);
+
+                    try
+                    {
+                        using (var stream = new FileStream(destinationPath, FileMode.Create))
+                        {
+                            await image.CopyToAsync(stream);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Ajoutez une gestion d'erreur appropriée ici
+                        Console.WriteLine($"Erreur lors de la copie de l'image : {ex.Message}");
+                        throw;
+                    }
+
+                    updatedImageUrls.Add(Path.Combine(existingProduct.Id + "_" + existingProduct.Name, fileName));
+                }
+
+                // Supprimer les images qui ne sont plus associées au produit
+                var removedImages = existingProduct.ImageUrls
+                    .Where(imageUrl => !updatedImageUrls.Contains(imageUrl))
+                    .ToList();
+
+                foreach (var removedImage in removedImages)
+                {
+                    var removedImagePath = Path.Combine(oldPath, Path.GetFileName(removedImage));
+
+                    try
+                    {
+                        File.Delete(removedImagePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Ajoutez une gestion d'erreur appropriée ici
+                        Console.WriteLine($"Erreur lors de la suppression de l'image : {ex.Message}");
+                        throw;
+                    }
+                }
+
+                existingProduct.ImageUrls = updatedImageUrls;
+            }
+
+            await _dbContext.SaveChangesAsync();
+        }
+
+        // Méthode utilitaire pour vérifier si deux images sont identiques
+        private bool IsSameImage(string imageUrl, IFormFile newImage)
+        {
+            // Vous pouvez implémenter une logique pour comparer les images, par exemple en comparant les noms de fichiers, les tailles, etc.
+            return Path.GetFileName(imageUrl) == Path.GetFileName(newImage.FileName);
+        }
+
+        public async Task<IActionResult> AddProductAsync([FromForm] Product product, [FromForm] List<IFormFile> images)
     {
         // Vérifier si la SubCategory associée au produit existe
         var existingSubCategory = await _dbContext.SubCategory
@@ -109,7 +278,7 @@ public async Task<IActionResult> AddProductAsync([FromForm] Product product, [Fr
 
         // Créer le dossier pour stocker les images du produit
         var productFolder = $"{product.Id}_{product.Name}";
-        var path = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Products", productFolder);
+        var path = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Products", productFolder);
 
         // Vérifier si le dossier existe, sinon le créer
         if (!Directory.Exists(path))
@@ -156,7 +325,7 @@ public async Task<IActionResult> AddProductAsync([FromForm] Product product, [Fr
         {
             var oldProductFolder = $"{existingProduct.Id}_{existingProduct.Name}";
             var newProductFolder = $"{existingProduct.Id}_{newProductName}";
-            var basePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Products");
+            var basePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Products");
 
             var oldPath = Path.Combine(basePath, oldProductFolder);
             var newPath = Path.Combine(basePath, newProductFolder);
@@ -208,7 +377,7 @@ public async Task<IActionResult> AddProductAsync([FromForm] Product product, [Fr
 
             var oldProductFolder = $"{existingProduct.Id}_{existingProduct.Name}";
             var oldProductName = existingProduct.Name; // Extraire l'ancien nom du produit
-            var oldPath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Products");
+            var oldPath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Products");
 
             // Comparer et mettre à jour les propriétés du produit
             existingProduct.Name = product.Name;
@@ -230,7 +399,7 @@ public async Task<IActionResult> AddProductAsync([FromForm] Product product, [Fr
             {
                 // Renommer le dossier du produit avec le nouveau nom
                 var newProductFolder = $"{existingProduct.Id}_{product.Name}";
-                var newPath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Products", newProductFolder);
+                var newPath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Products", newProductFolder);
 
                 try
                 {
@@ -265,7 +434,7 @@ public async Task<IActionResult> AddProductAsync([FromForm] Product product, [Fr
                 {
                     if (!product.ImageUrls.Contains(oldImageUrl))
                     {
-                        var oldImagePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Products", oldImageUrl);
+                        var oldImagePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Products", oldImageUrl);
 
                         try
                         {
@@ -353,7 +522,7 @@ public async Task<IActionResult> AddProductAsync([FromForm] Product product, [Fr
         private async Task DeleteProductFolder(Product product)
         {
             var productFolder = $"{product.Id}_{product.Name}";
-            var basePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Products");
+            var basePath = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Products");
             var productPath = Path.Combine(basePath, productFolder);
 
             try

@@ -109,6 +109,26 @@ namespace E_Commerce.Controllers
                     return BadRequest($"Error adding product: {ex.Message}");
                 }
             }*/
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            try
+            {
+                var product = await productRepository.GetByIdAsync(id);
+
+                if (product == null)
+                {
+                    return NotFound(); // 404 Not Found
+                }
+
+                return Ok(product); // 200 OK with the product data
+            }
+            catch (Exception ex)
+            {
+                // Log the exception or handle it as needed
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
         [HttpPost]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> AddProductAsync([FromForm] Product product, [FromForm] List<IFormFile> images)
@@ -135,7 +155,7 @@ namespace E_Commerce.Controllers
 
                 // Créer le dossier pour stocker les images du produit
                 var productFolder = $"{product.Id}_{product.Name}";
-                var path = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce Image\\Products", productFolder);
+                var path = Path.Combine("C:\\Users\\DELL\\Desktop\\E-Commerce Front\\E-commerce\\src\\assets\\E-Commerce-Image\\Products", productFolder);
 
                 // Vérifier si le dossier existe, sinon le créer
                 if (!Directory.Exists(path))
@@ -192,6 +212,34 @@ namespace E_Commerce.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Internal Server Error: {ex.Message}");
             }
         }
+            [HttpPut("updateNew/{productId}")]
+            public async Task<IActionResult> UpdateProductNewAsync(int productId, [FromForm] Product product, [FromForm] List<IFormFile> images)
+            {
+                try
+                {
+                    // Assurez-vous que l'ID du produit fourni correspond au paramètre de route
+                    if (productId != product.Id)
+                    {
+                    Console.WriteLine($"Received request for product ID: {productId}");
+
+                    return BadRequest("Product ID in the request body does not match the route parameter.");
+
+                }
+
+                // Appeler la méthode du service pour mettre à jour le produit
+                await productRepository.UpdateProductNewAsync(productId, product, images);
+
+                    return Ok("Product updated successfully.");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return NotFound(ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"Internal Server Error: {ex.Message}");
+                }
+            }
 
         [HttpPut("{productId}")]
         public async Task<IActionResult> UpdateProduct(int productId, [FromBody] Product product)
@@ -242,7 +290,7 @@ namespace E_Commerce.Controllers
         {
             if (subcategoryIds == null || !subcategoryIds.Any())
             {
-                return BadRequest("Please provide valid subcategory IDs for deletion.");
+                return BadRequest("Please provide valid Product IDs for deletion.");
             }
 
             try
@@ -251,7 +299,7 @@ namespace E_Commerce.Controllers
 
                 if (result)
                 {
-                    return Ok("Subcategories deleted successfully.");
+                    return Ok("Products deleted successfully.");
                 }
                 else
                 {
