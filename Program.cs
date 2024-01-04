@@ -22,6 +22,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<ICategoryRespository, CategoryRespository>();
 builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 var app = builder.Build();
@@ -34,6 +36,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication(); // Add this line to enable authentication
 
 app.UseAuthorization();
 app.UseCors(options =>

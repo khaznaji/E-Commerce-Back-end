@@ -31,7 +31,7 @@ namespace E_Commerce.Models.Domain
             public string Composition { get; set; }
             public string Col { get; set; }
             public bool Promo { get; set; }
-            public bool Onsale { get; set; }
+           // public bool Onsale { get; set; }
             public List<string> ImageUrls { get; set; } = new List<string>();
 
  }

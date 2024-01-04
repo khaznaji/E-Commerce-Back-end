@@ -134,7 +134,7 @@ namespace E_Commerce.Models.Repositories
             existingProduct.Composition = product.Composition;
             existingProduct.Col = product.Col;
             existingProduct.Promo = product.Promo;
-            existingProduct.Onsale = product.Onsale;
+           // existingProduct.Onsale = product.Onsale;
             existingProduct.Date = product.Date;
 
             // Vérifier si le nom du produit a changé
@@ -391,7 +391,7 @@ namespace E_Commerce.Models.Repositories
             existingProduct.Composition = product.Composition;
             existingProduct.Col = product.Col;
             existingProduct.Promo = product.Promo;
-            existingProduct.Onsale = product.Onsale;
+          //  existingProduct.Onsale = product.Onsale;
             existingProduct.Date = product.Date;
 
             // Vérifier si le nom du produit a changé
